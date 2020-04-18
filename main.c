@@ -13,8 +13,9 @@ uint32_t clk_plld_freq;
 uint32_t hw_pwm_max_freq;
 uint32_t hw_clk_min_freq;
 uint32_t hw_clk_max_freq;
-void *dmaMem = 0;
-void *dma15Mem = 0;
+uint8_t *dmaMem = 0;
+uint8_t *dma15Mem = 0;
+uint32_t *dmaEnableMem = 0;
 int fdMem = -1;
 
 
@@ -157,7 +158,13 @@ unsigned gpioHardwareRevision(void)
 
 
 void readEnabled() {
-
+   uint32_t enabled = *dmaEnableMem;
+   printf("|ENABLED       |");
+   for (int i = 0; i <= 14; i++) {
+     printSpaceOrX(((enabled >> i) & 0x01));
+   }
+   // DMA15 doesn*t have an entry in the ENABLE reg
+   printf("??|  %08x\n", enabled);
 }
 
 void readDMAStatus() {
@@ -202,7 +209,7 @@ void readReservedViaMailbox() {
   for (int i = 0; i <= 15; i++) {
     printSpaceOrX(!((dmaReserved >> i) & 0x01));
   }
-  printf("\n");
+  printf("  %08x\n", dmaReserved);
 }
 
 void printHeaderOrFooter() {
@@ -218,12 +225,19 @@ int main() {
     printf("Unable to open /dev/mem, please run as root");
     exit(1);
   }
-  dmaMem = mmap(0, DMA_LEN, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_SHARED, fdMem, DMA_BASE);
+  dmaMem = (uint8_t*)mmap(0, DMA_LEN, PROT_READ, MAP_SHARED, fdMem, DMA_BASE);
+  dmaEnableMem = (uint32_t*)(dmaMem + 0xFF0);
+  //printf("DMA MEM Locally AT %08x\n", dmaMem);
+  //printf("DMA ENABLE MEM Locally AT %08x\n", dmaEnableMem);
+  printf("DMA ENABLE: %08x\n", *dmaEnableMem);
 
 
   printHeaderOrFooter();
 
   readReservedViaMailbox();
+  readEnabled();
 
   printHeaderOrFooter();
+
+  close(fdMem);
 }
