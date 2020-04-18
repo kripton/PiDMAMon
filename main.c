@@ -168,7 +168,105 @@ void readEnabled() {
 }
 
 void readDMAStatus() {
+   rawDMARegs_t *dmaRegs = (rawDMARegs_t*) dmaMem;
+   rawDMARegs_t *dma15Reg = (rawDMARegs_t*) dma15Mem;
 
+   printf("|ACTIVE        |");
+   // DMA 01-14
+   for (int i = 0; i <= 14; i++) {
+     printSpaceOrX((dmaRegs[i].cs >> 0) & 0x1);
+   }
+   // DMA 15
+   printSpaceOrX((dma15Reg[0].cs >> 0) & 0x1);
+   printf("\n");
+
+   printf("|PAUSED        |");
+   // DMA 01-14
+   for (int i = 0; i <= 14; i++) {
+     printSpaceOrX((dmaRegs[i].cs >> 4) & 0x1);
+   }
+   // DMA 15
+   printSpaceOrX((dma15Reg[0].cs >> 4) & 0x1);
+   printf("\n");
+
+   printf("|DREQ          |");
+   // DMA 01-14
+   for (int i = 0; i <= 14; i++) {
+     printSpaceOrX((dmaRegs[i].cs >> 3) & 0x1);
+   }
+   // DMA 15
+   printSpaceOrX((dma15Reg[0].cs >> 3) & 0x1);
+   printf("\n");
+
+   printf("|PRIO/QOS      |");
+   // DMA 01-14
+   for (int i = 0; i <= 14; i++) {
+     printf("%02x|", (dmaRegs[i].cs >> 16) & 0x0F);
+   }
+   // DMA 15
+   printf("%02x|", (dma15Reg[0].cs >> 16) & 0x0F);
+   printf("\n");
+
+   printf("|PANIC PRIO/QOS|");
+   // DMA 01-14
+   for (int i = 0; i <= 14; i++) {
+     printf("%02x|", (dmaRegs[i].cs >> 20) & 0x0F);
+   }
+   // DMA 15
+   printf("%02x|", (dma15Reg[0].cs >> 20) & 0x0F);
+   printf("\n");
+
+   printf("|LITE          |");
+   // DMA 01-14
+   for (int i = 0; i <= 14; i++) {
+     printSpaceOrX((dmaRegs[i].debug >> 28) & 0x1);
+   }
+   // DMA 15
+   printSpaceOrX((dma15Reg[0].debug >> 28) & 0x1);
+   printf("\n");
+
+   // Not really interesting ...
+   /*
+   printf("|DMA VERSION   |");
+   // DMA 01-10
+   for (int i = 0; i <= 10; i++) {
+     printf("%02x|", (dmaRegs[i].debug >> 25) & 0xf);
+   }
+   // DMA 11-14
+   for (int i = 11; i <= 14; i++) {
+     printf("%02x|", (dmaRegs[i].debug >> 28) & 0xf);
+   }
+   // DMA 15
+   printf("%02x|", (dma15Reg[0].debug >> 25) & 0xf);
+   printf("\n");
+   */
+
+   printf("|STATE         |");
+   // DMA 01-10
+   for (int i = 0; i <= 10; i++) {
+     printf("%02x|", (dmaRegs[i].debug >> 16) & 0xFF);
+   }
+   // DMA 11-14
+   for (int i = 11; i <= 14; i++) {
+     printf("%1x%1x|", (dmaRegs[i].debug >> 14) & 0xf, (dmaRegs[i].debug >> 18) & 0xf);
+   }
+   // DMA 15
+   printf("??|");
+   printf("\n");
+
+   printf("|PERMAP        |");
+   // DMA 01-10
+   for (int i = 0; i <= 10; i++) {
+     printf("%02x|", (dmaRegs[i].ti >> 16) & 0x0F);
+   }
+   // DMA 11-14
+   for (int i = 11; i <= 14; i++) {
+     printf("%02x|", (dmaRegs[i].ti >> 9) & 0x0F);
+   }
+   // DMA 15
+   printf("%02x|", (dma15Reg[0].ti >> 16) & 0x0F);
+   printf(" 1=DSI0/PWM1 2=PCMTX ... 5=PWM0 ... 0b=eMMC ... 0d=SDHOST ...");
+   printf("\n");
 }
 
 void readReservedViaMailbox() {
@@ -227,15 +325,17 @@ int main() {
   }
   dmaMem = (uint8_t*)mmap(0, DMA_LEN, PROT_READ, MAP_SHARED, fdMem, DMA_BASE);
   dmaEnableMem = (uint32_t*)(dmaMem + 0xFF0);
+  dma15Mem = (uint8_t*)mmap(0, sizeof(rawDMARegs_t), PROT_READ, MAP_SHARED, fdMem, DMA15_BASE);
   //printf("DMA MEM Locally AT %08x\n", dmaMem);
   //printf("DMA ENABLE MEM Locally AT %08x\n", dmaEnableMem);
-  printf("DMA ENABLE: %08x\n", *dmaEnableMem);
+  //printf("DMA ENABLE: %08x\n", *dmaEnableMem);
 
 
   printHeaderOrFooter();
 
   readReservedViaMailbox();
   readEnabled();
+  readDMAStatus();
 
   printHeaderOrFooter();
 
