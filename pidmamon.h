@@ -11,10 +11,25 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
+#include <arpa/inet.h>  // ntohl
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct {
+   uint32_t cs;         // Control and status
+   uint32_t conblk_ad;  // Control Block Address
+   uint32_t ti;         // CB Word 0 (Transfer Information)
+   uint32_t source_ad;  // CB Word 1 (Source Address)
+   uint32_t dest_ad;    // CB Word 2 (Destination Address)
+   uint32_t txfer_len;  // CB Word 3 (Transfer Length)
+   uint32_t stride;     // CB Word 4 (2D Stride)
+   uint32_t nextconbk;  // CB Word 5 (Next CB Address)
+   uint32_t debug;      // Debug
+   uint32_t padding[55];// Padding to next DMA register
+
+} rawDMARegs_t;
 
 typedef struct { /* linux/arch/arm/mach-bcm2708/include/mach/dma.h */
    uint32_t info;
